@@ -1,0 +1,198 @@
+<div class="container">
+  <div class="row">
+    <div class="col-xs-8">
+      <h2 class="section-headline"><span>My Account</span></h2>
+    </div>
+    <div class="col-xs-4">
+      <img src="../../../assets/image/logo.jpg" alt="Responsive Logo"
+           class="img-responsive right" style="width: 400px;z-index: 1;" />
+    </div>
+    <img src="../../../assets/image/silver.jpg" alt="Responsive Background"
+         class="img-responsive right" style="height: 30%; width: 90%; position: absolute; margin-top: 90px;z-index: -2;" />
+  </div>
+  <hr style="position:absolute; width: 85%; height: 6px; background-color: #333; z-index: -1; margin-top: -225px;" />
+
+  <div *ngIf="!dataFetched" style="margin-top: 50px;">
+    <div class="row">
+      <div class="col-md-2 col-md-offset-5">
+        <mat-spinner></mat-spinner>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 30px;">
+    <div class="col-xs-3"></div>
+    <div *ngIf="dataFetched">
+      <div class="col-xs-9">
+        <div class="panel-group">
+          <div class="panel panel-default" style="border: none;">
+            <div class="panel-body" style="background-color: #ededed; margin-top: 20px;">
+              <mat-tab-group [selectedIndex]="selectedProfileTap">
+                <mat-tab label="Edit">
+                  <div style="margin-top: 20px;">
+                    <div class="alert alert-danger" *ngIf="incorrectPassword">
+                      <strong>Incorrect password!</strong>
+                      Please enter the correct passowrd for the current user.
+                    </div>
+                    <div class="alert alert-success" *ngIf="updateSuccess">
+                      <strong>Update Success!</strong>
+                    </div>
+                  </div>
+                  <form (ngSubmit)="onUpdateUserInfo()">
+                    <input type="hidden" name="id" [(ngModel)]="user.id" />
+                    <div class="bg-info" *ngIf="updateUserInfo">User Info Updated.</div>
+                    <div class="form-group">
+                      <div class="row">
+                        <div class="col-xs-6">
+                          <label for="firstName">First Name</label>
+                          <input type="text" class="form-control"
+                                 id="firstName" name="firstName" [(ngModel)]="user.firstName" />
+                        </div>
+                        <div class="col-xs-6">
+                          <label for="lastName">Last Name</label>
+                          <input type="text" class="form-control"
+                                 id="lastName" name="lastName" [(ngModel)]="user.lastName" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="username"> Username *</label>&nbsp;
+                              <span *ngIf="usernameExists" style="color: red;">
+                                Username already exists. choose a different one. </span>
+                      <input required="required" type="text" class="form-control"
+                             id="username" name="username" [(ngModel)]="user.username" />
+                    </div>
+                    <div class="form-group">
+                      <label for="currentPassword">Current Password</label>&nbsp;
+                      <input type="password" class="form-control"
+                             id="currentPassword" name="currentPassword" [(ngModel)]="currentPassword" />
+                      <p style="color: #828282">
+                        Enter your current password to change the E-mail address or Password </p>
+                    </div>
+                    <div class="form-group">
+                      <label for="email"> Email *</label>&nbsp;
+                      <span *ngIf="emailExists" style="color: red;">
+                                Email already exists. choose a different one. </span>
+                      <input required="required" type="email" class="form-control"
+                             id="email" name="email" [(ngModel)]="user.email" />
+                      <p style="color: #828282">
+                      A valid e-mail address. All e-mails from the system will be sent to this address.</p>
+                    </div>
+                    <div class="form-group">
+                      <label for="txtNewPassword"> New Password </label>&nbsp;
+                              <span id="checkPasswordMatch" style="color: red;"></span>
+                      <input type="password" class="form-control"
+                             id="txtNewPassword" name="txtNewPassword" [(ngModel)]="newPassword" />
+                    </div>
+                    <div class="form-group">
+                      <label for="txtConfirmPassword"> Confirm New Password </label>&nbsp;
+                      <input type="password" class="form-control"
+                             id="txtConfirmPassword" name="txtConfirmPassword" />
+                    </div>
+                    <button mat-raised-button type="submit"
+                            class="mat-primary" id="updateUserInforButton">Save</button>
+                  </form>
+                </mat-tab>
+                <mat-tab label="Payment">
+                  <br><br>
+                  <div>
+                    <p *ngIf="defaultPaymentSet">Default Payment Set Successfully!</p>
+                    <mat-tab-group (selectedIndexChange)="selectedBillingChange($event)"
+                                   [selectedIndex]="selectedBillingTap">
+                      <mat-tab label="List of Credit Cards">
+                        <form (ngSubmit)="setDefaultPayment()" method="post">
+                          <table class="table">
+                            <thead>
+                              <tr>
+                                <th>Default</th>
+                                <th>Credit Card</th>
+                                <th>Operations</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let userPayment of userPaymentList">
+                                <td>
+                                  <input type="radio" name="defaultUserPaymentId"
+                                         [(ngModel)]="defaultUserPaymentId" [value]="userPayment.id" />
+                                  <span>default</span>
+                                </td>
+                                <td>{{userPayment.cardName}}</td>
+                                <td>
+                                  <a mat-button (click)="onUpdatePayment(userPayment)">
+                                        <i class="fa fa-pencil"></i></a>&nbsp;
+                                  <a mat-button (click)="onRemovePayment(userPayment)">
+                                        <i class="fa fa-remove"></i></a>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <button mat-raised-button class="mat-primary" type="submit">Save</button>
+                        </form>
+                      </mat-tab>
+                      <mat-tab label="Add/Update - Credit Card">
+                        <form (ngSubmit)="onNewPayment()" method="post">
+                          <div class="bg-info" *ngIf="userInfoUpdated">User Info Updated.</div>
+                          <input hidden="hidden" name="id" [(ngModel)]="userPayment.id" />
+                          <div class="form-group">
+                            <label for="cardName">* Give a name for your card</label>
+                            <input type="text" class="form-control" id="cardName" name="cardName"
+                                   placeholder="Card Name" required="required" [(ngModel)]="userPayment.cardName"/>
+                          </div>
+
+                          <!-- Billing Address -->
+                          <hr />
+                          <div class="form-group">
+                            <label for="billingName">* Name</label>
+                            <input type="text" class="form-control" id="billingName" placeholder="Receiver Name"
+                              name="userBillingName" requierd="required" [(ngModel)]="userBilling.userBillingName"/>
+                          </div>
+                          <div class="form-group">
+                            <label for="billingAddress">* Street Address</label>
+                            <input type="text" class="form-control" id="billingAddress" placeholder="Street Address 1"
+                                   name="userBillingStreet1" requierd="required" [(ngModel)]="userBilling.userBillingStreet1"/>
+                          </div>
+                          <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Street Address 2"
+                                   name="userBillingStreet1" [(ngModel)]="userBilling.userBillingStreet2"/>
+                          </div>
+                          <div class="row">
+                            <div class="col-xs-4">
+                              <div class="form-group">
+                                <label for="userBillingCity">* City</label>
+                                <input type="text" class="form-control" id="userBillingCity"
+                                       placeholder="Your Billing City" name="userBillingCity"
+                                       requierd="required" [(ngModel)]="userBilling.userBillingCity"/>
+                              </div>
+                            </div>
+                            <div class="col-xs-4">
+                              <div class="form-group">
+                                <label for="userBillingState">* State</label>
+                                <select id="userBillingState" name="userBillingState"
+                                        class="form-control" [(ngModel)]="userBilling.userBillingState" required="required">
+                                  <option value="" disabled>-- state --</option>
+                                  <option *ngFor="let state of stateList">{{state}}</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col-xs-4">
+                              <div class="form-group">
+                                <label for="userBillingZipCode">* Zip Code</label>
+                                <input type="text" class="form-control" id="userBillingZipCode"
+                                       placeholder="Your Billing Zip Code" name="userBillingZipCode"
+                                       requierd="required" [(ngModel)]="userBilling.userBillingZipCode"/>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                      </mat-tab>
+                    </mat-tab-group>
+                  </div>
+                </mat-tab>
+              </mat-tab-group>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
